@@ -1,375 +1,503 @@
 <!DOCTYPE html>
-<html lang="vi">
-import { FormEvent, useEffect, useMemo, useState } from "react";
+<html lang="vi" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nguyễn Huỳnh Kim Trang - Portfolio Giáo viên Hóa học</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-const PROFILE_IMAGE_URL = "https://res-console.cloudinary.com/dtr6koe8p/thumbnails/transform/v1/image/upload/Y19maWxsLGhfMjAwLHdfMjAw/v1/YW5oX3RoZV9obHdneGg=/template_primary"; // Anh dai dien
+    <style>
+        .type-caret {
+            animation: blink 0.75s step-end infinite;
+        }
+        @keyframes blink {
+            from, to { color: transparent }
+            50% { color: #047857 }
+        }
+        
+        /* Hiệu ứng bong bóng phân tử bay */
+        .molecule-field {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .molecule-node {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: rgba(16, 185, 129, 0.2);
+            border-radius: 50%;
+            animation: float Up linear infinite;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0.5); opacity: 0; }
+            50% { opacity: 0.6; }
+            100% { transform: translateY(-10vh) scale(1.2); opacity: 0; }
+        }
 
-const typewriterTitles = [
-  "Giáo viên Hóa học",
-  "Thạc sĩ Hóa Lý tương lai",
-  "Người truyền lửa Khoa học",
-];
+        /* Hiệu ứng xuất hiện khi cuộn trang */
+        [data-reveal] {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s ease-out;
+        }
+        [data-reveal].is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
 
-const educationItems = [
-  {
-    year: "2020 - 2025",
-    title: "Cử nhân Sư phạm Hóa học",
-    detail: "Tốt nghiệp loại Giỏi, nền tảng vững chắc về chuyên môn Hóa học và nghiệp vụ sư phạm.",
-  },
-  {
-    year: "2025 - Hiện tại",
-    title: "Cao học Hóa Lý thuyết và Hóa Lý",
-    detail: "Tiếp tục nghiên cứu chuyên sâu, mở rộng năng lực phân tích và ứng dụng kiến thức Hóa học hiện đại.",
-  },
-];
+        /* Khung ảnh orbit */
+        .avatar-orbit {
+            position: relative;
+            padding: 1rem;
+            border: 1px dashed #10b981;
+            border-radius: 50%;
+        }
+        .avatar-frame {
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+        }
 
-const experiences = [
-  {
-    icon: "fa-solid fa-chalkboard-user",
-    title: "Giáo viên THCS tại địa phương",
-    detail:
-      "Giảng dạy theo chương trình GDPT mới, thiết kế bài học rõ mục tiêu, tăng hoạt động thực hành và thảo luận để học sinh học chủ động hơn.",
-  },
-  {
-    icon: "fa-solid fa-user-graduate",
-    title: "Gia sư Hóa học tự do",
-    detail:
-      "Dạy Hóa lớp 10, 11, 12, xây dựng lộ trình cá nhân hóa theo năng lực từng học sinh và hỗ trợ bứt phá điểm số.",
-  },
-];
+        /* Custom bổ sung cho các cấu trúc thẻ cũ */
+        .nav-link {
+            transition: color 0.2s;
+        }
+        .nav-link:hover {
+            color: #059669;
+        }
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: #020617;
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #047857;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover {
+            background-color: #f1f5f9;
+            transform: translateY(-2px);
+        }
+        .timeline-item {
+            position: relative;
+            padding-left: 2rem;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: 0.85rem;
+            top: 0.5rem;
+            height: 0.75rem;
+            width: 0.75rem;
+            border-radius: 50%;
+            background-color: #10b981;
+        }
+        .experience-card {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        }
+        .skill-panel {
+            background-color: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 1rem;
+        }
+        .skill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            background-color: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        }
+        .contact-link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .form-field span {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #cbd5e1;
+        }
+        .form-field input, .form-field textarea {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: #ffffff;
+            outline: none;
+        }
+        .form-field input:focus, .form-field textarea:focus {
+            border-color: #10b981;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 antialiased selection:bg-emerald-200 selection:text-emerald-950">
 
-const skillGroups = [
-  {
-    title: "Kỹ năng Sư phạm",
-    icon: "fa-solid fa-book-open-reader",
-    skills: [
-      "Phương pháp dạy học hiện đại",
-      "Xây dựng lộ trình cá nhân hóa",
-      "Giao tiếp và tạo động lực cho học sinh",
-    ],
-  },
-  {
-    title: "Công nghệ Giáo dục",
-    icon: "fa-solid fa-laptop-code",
-    skills: [
-      "PowerPoint chuyên nghiệp",
-      "ChemDraw vẽ cấu trúc hóa học",
-      "Mô phỏng thí nghiệm Hóa học ảo",
-    ],
-  },
-];
+    <header class="fixed inset-x-0 top-0 z-50 border-b border-white/30 bg-white/80 backdrop-blur-xl">
+        <nav class="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8" aria-label="Thanh điều hướng chính">
+            <a href="#hero" class="group flex items-center gap-3 font-semibold tracking-tight text-slate-950" aria-label="Về đầu trang">
+                <span class="grid h-10 w-10 place-items-center rounded-full bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 transition group-hover:scale-105">
+                    <i class="fa-solid fa-flask-vial" aria-hidden="true"></i>
+                </span>
+                <span class="hidden sm:inline">Nguyễn Huỳnh Kim Trang</span>
+                <span class="sm:hidden">Kim Trang</span>
+            </a>
 
-const contactItems = [
-  { icon: "fa-solid fa-envelope", label: "Email", value: "kimtrangphumypt@gmail.com", href: "mailto:kimtrangphumypt@gmail.com" },
-  { icon: "fa-solid fa-phone", label: "Điện thoại", value: "0983019644", href: "tel:0983019644" },
-  { icon: "fa-solid fa-location-dot", label: "Địa chỉ", value: "Phú Tân, An Giang", href: "https://maps.google.com/?q=Phu%20Tan%20An%20Giang" },
-];
+            <div class="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex">
+                <a class="nav-link" href="#about">Về tôi</a>
+                <a class="nav-link" href="#experience">Kinh nghiệm</a>
+                <a class="nav-link" href="#skills">Kỹ năng</a>
+                <a class="nav-link" href="#contact">Liên hệ</a>
+            </div>
 
-function useTypewriter(words: string[]) {
-  const [wordIndex, setWordIndex] = useState(0);
-  const [letterIndex, setLetterIndex] = useState(0);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    const currentWord = words[wordIndex];
-    const isWordComplete = !isDeleting && letterIndex === currentWord.length;
-    const isWordDeleted = isDeleting && letterIndex === 0;
-    const delay = isWordComplete ? 1300 : isDeleting ? 42 : 78;
-
-    const timer = window.setTimeout(() => {
-      if (isWordComplete) {
-        setIsDeleting(true);
-        return;
-      }
-
-      if (isWordDeleted) {
-        setIsDeleting(false);
-        setWordIndex((index) => (index + 1) % words.length);
-        return;
-      }
-
-      setLetterIndex((index) => index + (isDeleting ? -1 : 1));
-    }, delay);
-
-    return () => window.clearTimeout(timer);
-  }, [isDeleting, letterIndex, wordIndex, words]);
-
-  return words[wordIndex].slice(0, letterIndex);
-}
-
-export default function App() {
-  const typedTitle = useTypewriter(typewriterTitles);
-
-  const moleculeNodes = useMemo(
-    () =>
-      Array.from({ length: 18 }, (_, index) => ({
-        id: index,
-        left: `${(index * 17 + 8) % 96}%`,
-        top: `${(index * 23 + 12) % 88}%`,
-        delay: `${(index % 6) * 0.65}s`,
-        duration: `${7 + (index % 5)}s`,
-      })),
-    [],
-  );
-
-  useEffect(() => {
-    const revealElements = document.querySelectorAll<HTMLElement>("[data-reveal]");
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.15 },
-    );
-
-    revealElements.forEach((element) => observer.observe(element));
-    return () => observer.disconnect();
-  }, []);
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    form.reset();
-    window.alert("Cảm ơn bạn đã liên hệ. Cô Trang sẽ phản hồi trong thời gian sớm nhất.");
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 antialiased selection:bg-emerald-200 selection:text-emerald-950">
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/30 bg-white/80 backdrop-blur-xl">
-        <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8" aria-label="Thanh điều hướng chính">
-          <a href="#hero" className="group flex items-center gap-3 font-semibold tracking-tight text-slate-950" aria-label="Về đầu trang">
-            <span className="grid h-10 w-10 place-items-center rounded-full bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 transition group-hover:scale-105">
-              <i className="fa-solid fa-flask-vial" aria-hidden="true" />
-            </span>
-            <span className="hidden sm:inline">Nguyễn Huỳnh Kim Trang</span>
-            <span className="sm:hidden">Kim Trang</span>
-          </a>
-
-          <div className="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex">
-            <a className="nav-link" href="#about">Về tôi</a>
-            <a className="nav-link" href="#experience">Kinh nghiệm</a>
-            <a className="nav-link" href="#skills">Kỹ năng</a>
-            <a className="nav-link" href="#contact">Liên hệ</a>
-          </div>
-
-          <a
-            href="#contact"
-            className="rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-700/20"
-          >
-            Kết nối
-          </a>
+            <a href="#contact" class="rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-700/20">
+                Kết nối
+            </a>
         </nav>
-      </header>
+    </header>
 
-      <main>
-        <section id="hero" className="relative flex min-h-screen items-center overflow-hidden bg-[radial-gradient(circle_at_top_left,#ccfbf1_0%,transparent_32%),linear-gradient(135deg,#f8fafc_0%,#ffffff_43%,#dff7ef_100%)] px-5 pt-24 sm:px-8">
-          <div className="molecule-field" aria-hidden="true">
-            {moleculeNodes.map((node) => (
-              <span
-                key={node.id}
-                className="molecule-node"
-                style={{ left: node.left, top: node.top, animationDelay: node.delay, animationDuration: node.duration }}
-              />
-            ))}
-          </div>
+    <main>
+        <section id="hero" class="relative flex min-h-screen items-center overflow-hidden bg-[radial-gradient(circle_at_top_left,#ccfbf1_0%,transparent_32%),linear-gradient(135deg,#f8fafc_0%,#ffffff_43%,#dff7ef_100%)] px-5 pt-24 sm:px-8">
+            
+            <div class="molecule-field" id="molecule-container" aria-hidden="true"></div>
 
-          <div className="mx-auto grid w-full max-w-7xl items-center gap-12 py-16 lg:grid-cols-[1.08fr_0.92fr]">
-            <div className="relative z-10 max-w-3xl" data-reveal>
-              <p className="mb-5 font-serif text-2xl italic tracking-tight text-emerald-700 sm:text-3xl">Portfolio Giáo viên Hóa học</p>
-              <h1 className="text-5xl font-black tracking-[-0.055em] text-slate-950 sm:text-7xl lg:text-8xl">
-                Nguyễn Huỳnh Kim Trang
-              </h1>
-              <div className="mt-6 min-h-12 text-2xl font-semibold text-emerald-700 sm:text-3xl">
-                <span>{typedTitle}</span>
-                <span className="type-caret" aria-hidden="true">|</span>
-              </div>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-                Cử nhân Sư phạm Hóa học và học viên cao học ngành Hóa Lý thuyết và Hóa Lý, hướng đến lớp học năng động, sáng tạo và giàu cảm hứng khoa học.
-              </p>
-              <div className="mt-9 flex flex-col gap-4 sm:flex-row">
-                <a className="btn-primary" href="#contact">
-                  Liên hệ ngay
-                  <i className="fa-solid fa-arrow-right" aria-hidden="true" />
-                </a>
-                <a className="btn-secondary" href="#about">
-                  Xem CV
-                  <i className="fa-regular fa-file-lines" aria-hidden="true" />
-                </a>
-              </div>
-            </div>
-
-            <div className="relative z-10 flex justify-center lg:justify-end" data-reveal>
-              <div className="avatar-orbit" aria-label="Khu vực chèn ảnh đại diện">
-                <div className="avatar-frame">
-                  {PROFILE_IMAGE_URL ? (
-                    <img src={PROFILE_IMAGE_URL} alt="Ảnh đại diện Nguyễn Huỳnh Kim Trang" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-white via-emerald-50 to-sky-100 px-8 text-center">
-                      <i className="fa-solid fa-user-graduate mb-5 text-6xl text-emerald-600" aria-hidden="true" />
-                      <span className="text-sm font-semibold uppercase tracking-[0.32em] text-emerald-700">Chèn ảnh tại đây</span>
-                      <span className="mt-3 text-sm leading-6 text-slate-500">Thay PROFILE_IMAGE_URL trong src/App.tsx bằng link ảnh cá nhân.</span>
+            <div class="mx-auto grid w-full max-w-7xl items-center gap-12 py-16 lg:grid-cols-[1.08fr_0.92fr]">
+                <div class="relative z-10 max-w-3xl" data-reveal>
+                    <p class="mb-5 font-serif text-2xl italic tracking-tight text-emerald-700 sm:text-3xl">Portfolio Giáo viên Hóa học</p>
+                    <h1 class="text-5xl font-black tracking-[-0.055em] text-slate-950 sm:text-7xl lg:text-8xl">
+                        Nguyễn Huỳnh Kim Trang
+                    </h1>
+                    <div class="mt-6 min-h-12 text-2xl font-semibold text-emerald-700 sm:text-3xl">
+                        <span id="typewriter-text"></span><span class="type-caret" aria-hidden="true">|</span>
                     </div>
-                  )}
+                    <p class="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
+                        Cử nhân Sư phạm Hóa học và học viên cao học ngành Hóa Lý thuyết và Hóa Lý, hướng đến lớp học năng động, sáng tạo và giàu cảm hứng khoa học.
+                    </p>
+                    <div class="mt-9 flex flex-col gap-4 sm:flex-row">
+                        <a class="btn-primary" href="#contact">
+                            Liên hệ ngay
+                            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                        </a>
+                        <a class="btn-secondary" href="#about">
+                            Xem CV
+                            <i class="fa-regular fa-file-lines" aria-hidden="true"></i>
+                        </a>
+                    </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
-        <section id="about" className="section-shell bg-white">
-          <div className="mx-auto grid max-w-7xl gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-            <div data-reveal>
-              <p className="section-kicker">Về tôi và học vấn</p>
-              <h2 className="section-title">Nền tảng chuyên môn vững chắc, định hướng giảng dạy hiện đại.</h2>
-              <p className="mt-6 text-lg leading-8 text-slate-600">
-                Tôi mong muốn áp dụng kiến thức chuyên ngành Hóa học cùng các phương pháp dạy học mới để tạo môi trường học tập gần gũi, năng động và khơi gợi tư duy khoa học cho học sinh.
-              </p>
-              <dl className="mt-8 grid gap-4 text-sm text-slate-600 sm:grid-cols-2">
-                <div>
-                  <dt className="font-semibold text-slate-950">Ngày sinh</dt>
-                  <dd>03/11/2002</dd>
+                <div class="relative z-10 flex justify-center lg:justify-end" data-reveal>
+                    <div class="avatar-orbit" aria-label="Khu vực chèn ảnh đại diện">
+                        <div class="avatar-frame">
+                            <img src="https://res-console.cloudinary.com/dtr6koe8p/thumbnails/transform/v1/image/upload/Y19maWxsLGhfMjAwLHdfMjAw/v1/YW5oX3RoZV9obHdneGg=/template_primary" 
+                                 alt="Ảnh đại diện Nguyễn Huỳnh Kim Trang" 
+                                 class="h-full w-full object-cover"
+                                 onerror="this.style.display='none'; document.getElementById('avatar-placeholder').style.display='flex';">
+                            
+                            <div id="avatar-placeholder" class="hidden h-full w-full flex-col items-center justify-center bg-gradient-to-br from-white via-emerald-50 to-sky-100 px-8 text-center">
+                                <i class="fa-solid fa-user-graduate mb-5 text-6xl text-emerald-600" aria-hidden="true"></i>
+                                <span class="text-sm font-semibold uppercase tracking-[0.32em] text-emerald-700">Ảnh chân dung</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                  <dt className="font-semibold text-slate-950">Địa chỉ</dt>
-                  <dd>Phú Tân, An Giang</dd>
+            </div>
+        </section>
+
+        <section id="about" class="py-24 bg-white">
+            <div class="mx-auto grid max-w-7xl gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-start px-5 sm:px-8">
+                <div data-reveal>
+                    <p class="text-sm font-bold uppercase tracking-[0.24em] text-emerald-700">Về tôi và học vấn</p>
+                    <h2 class="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Nền tảng chuyên môn vững chắc, định hướng giảng dạy hiện đại.</h2>
+                    <p class="mt-6 text-lg leading-8 text-slate-600">
+                        Tôi mong muốn áp dụng kiến thức chuyên ngành Hóa học cùng các phương pháp dạy học mới để tạo môi trường học tập gần gũi, năng động và khơi gợi tư duy khoa học cho học sinh.
+                    </p>
+                    <dl class="mt-8 grid gap-4 text-sm text-slate-600 sm:grid-cols-2">
+                        <div>
+                            <dt class="font-semibold text-slate-950">Ngày sinh</dt>
+                            <dd>03/11/2002</dd>
+                        </div>
+                        <div>
+                            <dt class="font-semibold text-slate-950">Địa chỉ</dt>
+                            <dd>Phú Tân, An Giang</dd>
+                        </div>
+                    </dl>
                 </div>
-              </dl>
-            </div>
 
-            <div className="relative" data-reveal>
-              <div className="absolute left-4 top-2 hidden h-[calc(100%-1rem)] w-px bg-gradient-to-b from-emerald-500 via-emerald-200 to-transparent sm:block" aria-hidden="true" />
-              <div className="space-y-8">
-                {educationItems.map((item) => (
-                  <article key={item.year} className="timeline-item">
-                    <span className="timeline-dot" aria-hidden="true" />
-                    <div>
-                      <p className="text-sm font-bold uppercase tracking-[0.24em] text-emerald-700">{item.year}</p>
-                      <h3 className="mt-2 text-2xl font-bold tracking-tight text-slate-950">{item.title}</h3>
-                      <p className="mt-3 leading-7 text-slate-600">{item.detail}</p>
+                <div class="relative" data-reveal>
+                    <div class="absolute left-4 top-2 hidden h-[calc(100%-1rem)] w-px bg-gradient-to-b from-emerald-500 via-emerald-200 to-transparent sm:block" aria-hidden="true"></div>
+                    <div class="space-y-8">
+                        <article class="timeline-item">
+                            <span class="timeline-dot" aria-hidden="true"></span>
+                            <div>
+                                <p class="text-sm font-bold uppercase tracking-[0.24em] text-emerald-700">2020 - 2025</p>
+                                <h3 class="mt-2 text-2xl font-bold tracking-tight text-slate-950">Cử nhân Sư phạm Hóa học</h3>
+                                <p class="mt-3 leading-7 text-slate-600">Tốt nghiệp loại Giỏi, nền tảng vững chắc về chuyên môn Hóa học và nghiệp vụ sư phạm.</p>
+                            </div>
+                        </article>
+                        <article class="timeline-item">
+                            <span class="timeline-dot" aria-hidden="true"></span>
+                            <div>
+                                <p class="text-sm font-bold uppercase tracking-[0.24em] text-emerald-700">2025 - Hiện tại</p>
+                                <h3 class="mt-2 text-2xl font-bold tracking-tight text-slate-950">Cao học Hóa Lý thuyết và Hóa Lý</h3>
+                                <p class="mt-3 leading-7 text-slate-600">Tiếp tục nghiên cứu chuyên sâu, mở rộng năng lực phân tích và ứng dụng kiến thức Hóa học hiện đại.</p>
+                            </div>
+                        </article>
                     </div>
-                  </article>
-                ))}
-              </div>
+                </div>
             </div>
-          </div>
         </section>
 
-        <section id="experience" className="section-shell bg-slate-50">
-          <div className="mx-auto max-w-7xl">
-            <div className="max-w-3xl" data-reveal>
-              <p className="section-kicker">Kinh nghiệm giảng dạy</p>
-              <h2 className="section-title">Biến kiến thức Hóa học thành trải nghiệm học dễ hiểu và có mục tiêu.</h2>
-            </div>
+        <section id="experience" class="py-24 bg-slate-50">
+            <div class="mx-auto max-w-7xl px-5 sm:px-8">
+                <div class="max-w-3xl" data-reveal>
+                    <p class="text-sm font-bold uppercase tracking-[0.24em] text-emerald-700">Kinh nghiệm giảng dạy</p>
+                    <h2 class="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Biến kiến thức Hóa học thành trải nghiệm học dễ hiểu và có mục tiêu.</h2>
+                </div>
 
-            <div className="mt-12 grid gap-6 md:grid-cols-2">
-              {experiences.map((experience) => (
-                <article key={experience.title} className="experience-card" data-reveal>
-                  <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-600 text-xl text-white shadow-lg shadow-emerald-600/20">
-                    <i className={experience.icon} aria-hidden="true" />
-                  </div>
-                  <h3 className="text-2xl font-bold tracking-tight text-slate-950">{experience.title}</h3>
-                  <p className="mt-4 leading-8 text-slate-600">{experience.detail}</p>
-                </article>
-              ))}
+                <div class="mt-12 grid gap-6 md:grid-cols-2">
+                    <article class="experience-card" data-reveal>
+                        <div class="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-600 text-xl text-white shadow-lg shadow-emerald-600/20">
+                            <i class="fa-solid fa-chalkboard-user" aria-hidden="true"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold tracking-tight text-slate-950">Giáo viên THCS tại địa phương</h3>
+                        <p class="mt-4 leading-8 text-slate-600">Giảng dạy theo chương trình GDPT mới, thiết kế bài học rõ mục tiêu, tăng hoạt động thực hành và thảo luận để học sinh học chủ động hơn.</p>
+                    </article>
+
+                    <article class="experience-card" data-reveal>
+                        <div class="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-600 text-xl text-white shadow-lg shadow-emerald-600/20">
+                            <i class="fa-solid fa-user-graduate" aria-hidden="true"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold tracking-tight text-slate-950">Gia sư Hóa học tự do</h3>
+                        <p class="mt-4 leading-8 text-slate-600">Dạy Hóa lớp 10, 11, 12, xây dựng lộ trình cá nhân hóa theo năng lực từng học sinh và hỗ trợ bứt phá điểm số.</p>
+                    </article>
+                </div>
             </div>
-          </div>
         </section>
 
-        <section id="skills" className="section-shell bg-white">
-          <div className="mx-auto max-w-7xl">
-            <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-              <div data-reveal>
-                <p className="section-kicker">Kỹ năng chuyên môn</p>
-                <h2 className="section-title">Kết hợp năng lực sư phạm với công nghệ giáo dục.</h2>
-                <p className="mt-6 text-lg leading-8 text-slate-600">
-                  Hệ kỹ năng được xây dựng để tối ưu quá trình truyền đạt kiến thức, cá nhân hóa lộ trình học và tăng tính trực quan trong các chủ đề Hóa học.
-                </p>
-              </div>
-
-              <div className="grid gap-6" data-reveal>
-                {skillGroups.map((group) => (
-                  <section key={group.title} className="skill-panel" aria-labelledby={group.title.replace(/\s+/g, "-")}>
-                    <div className="mb-6 flex items-center gap-4">
-                      <span className="grid h-12 w-12 place-items-center rounded-full bg-emerald-100 text-emerald-700">
-                        <i className={group.icon} aria-hidden="true" />
-                      </span>
-                      <h3 id={group.title.replace(/\s+/g, "-")} className="text-xl font-bold text-slate-950">{group.title}</h3>
+        <section id="skills" class="py-24 bg-white">
+            <div class="mx-auto max-w-7xl px-5 sm:px-8">
+                <div class="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+                    <div data-reveal>
+                        <p class="text-sm font-bold uppercase tracking-[0.24em] text-emerald-700">Kỹ năng chuyên môn</p>
+                        <h2 class="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Kết hợp năng lực sư phạm với công nghệ giáo dục.</h2>
+                        <p class="mt-6 text-lg leading-8 text-slate-600">
+                            Hệ kỹ năng được xây dựng để tối ưu quá trình truyền đạt kiến thức, cá nhân hóa lộ trình học và tăng tính trực quan trong các chủ đề Hóa học.
+                        </p>
                     </div>
-                    <div className="flex flex-wrap gap-3">
-                      {group.skills.map((skill) => (
-                        <span key={skill} className="skill-badge">
-                          <i className="fa-solid fa-atom" aria-hidden="true" />
-                          {skill}
-                        </span>
-                      ))}
+
+                    <div class="grid gap-6" data-reveal>
+                        <section class="skill-panel">
+                            <div class="mb-6 flex items-center gap-4">
+                                <span class="grid h-12 w-12 place-items-center rounded-full bg-emerald-100 text-emerald-700">
+                                    <i class="fa-solid fa-book-open-reader" aria-hidden="true"></i>
+                                </span>
+                                <h3 class="text-xl font-bold text-slate-950">Kỹ năng Sư phạm</h3>
+                            </div>
+                            <div class="flex flex-wrap gap-3">
+                                <span class="skill-badge"><i class="fa-solid fa-atom" aria-hidden="true"></i> Phương pháp dạy học hiện đại</span>
+                                <span class="skill-badge"><i class="fa-solid fa-atom" aria-hidden="true"></i> Xây dựng lộ trình cá nhân hóa</span>
+                                <span class="skill-badge"><i class="fa-solid fa-atom" aria-hidden="true"></i> Giao tiếp và tạo động lực cho học sinh</span>
+                            </div>
+                        </section>
+
+                        <section class="skill-panel">
+                            <div class="mb-6 flex items-center gap-4">
+                                <span class="grid h-12 w-12 place-items-center rounded-full bg-emerald-100 text-emerald-700">
+                                    <i class="fa-solid fa-laptop-code" aria-hidden="true"></i>
+                                </span>
+                                <h3 class="text-xl font-bold text-slate-950">Công nghệ Giáo dục</h3>
+                            </div>
+                            <div class="flex flex-wrap gap-3">
+                                <span class="skill-badge"><i class="fa-solid fa-atom" aria-hidden="true"></i> PowerPoint chuyên nghiệp</span>
+                                <span class="skill-badge"><i class="fa-solid fa-atom" aria-hidden="true"></i> ChemDraw vẽ cấu trúc hóa học</span>
+                                <span class="skill-badge"><i class="fa-solid fa-atom" aria-hidden="true"></i> Mô phỏng thí nghiệm Hóa học ảo</span>
+                            </div>
+                        </section>
                     </div>
-                  </section>
-                ))}
-              </div>
+                </div>
             </div>
-          </div>
         </section>
 
-        <section id="contact" className="section-shell bg-slate-950 text-white">
-          <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-            <div data-reveal>
-              <p className="section-kicker text-emerald-300">Liên hệ</p>
-              <h2 className="section-title text-white">Sẵn sàng trao đổi về giảng dạy, gia sư và cơ hội nghề nghiệp.</h2>
-              <p className="mt-6 text-lg leading-8 text-slate-300">
-                Vui lòng để lại thông tin hoặc liên hệ trực tiếp qua email, điện thoại. Tôi sẽ phản hồi trong thời gian sớm nhất.
-              </p>
+        <section id="contact" class="py-24 bg-slate-950 text-white">
+            <div class="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-start px-5 sm:px-8">
+                <div data-reveal>
+                    <p class="text-sm font-bold uppercase tracking-[0.24em] text-emerald-300">Liên hệ</p>
+                    <h2 class="mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl">Sẵn sàng trao đổi về giảng dạy, gia sư và cơ hội nghề nghiệp.</h2>
+                    <p class="mt-6 text-lg leading-8 text-slate-300">
+                        Vui lòng để lại thông tin hoặc liên hệ trực tiếp qua email, điện thoại. Tôi sẽ phản hồi trong thời gian sớm nhất.
+                    </p>
 
-              <div className="mt-10 space-y-5">
-                {contactItems.map((item) => (
-                  <a key={item.label} href={item.href} className="contact-link" target={item.href.startsWith("http") ? "_blank" : undefined} rel="noreferrer">
-                    <span className="grid h-12 w-12 place-items-center rounded-full bg-white/10 text-emerald-300">
-                      <i className={item.icon} aria-hidden="true" />
-                    </span>
-                    <span>
-                      <span className="block text-sm text-slate-400">{item.label}</span>
-                      <span className="font-semibold text-white">{item.value}</span>
-                    </span>
-                  </a>
-                ))}
-              </div>
+                    <div class="mt-10 space-y-5">
+                        <a href="mailto:kimtrangphumypt@gmail.com" class="contact-link">
+                            <span class="grid h-12 w-12 place-items-center rounded-full bg-white/10 text-emerald-300">
+                                <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+                            </span>
+                            <span>
+                                <span class="block text-sm text-slate-400">Email</span>
+                                <span class="font-semibold text-white">kimtrangphumypt@gmail.com</span>
+                            </span>
+                        </a>
+                        <a href="tel:0983019644" class="contact-link">
+                            <span class="grid h-12 w-12 place-items-center rounded-full bg-white/10 text-emerald-300">
+                                <i class="fa-solid fa-phone" aria-hidden="true"></i>
+                            </span>
+                            <span>
+                                <span class="block text-sm text-slate-400">Điện thoại</span>
+                                <span class="font-semibold text-white">0983019644</span>
+                            </span>
+                        </a>
+                        <a href="https://maps.google.com" target="_blank" rel="noreferrer" class="contact-link">
+                            <span class="grid h-12 w-12 place-items-center rounded-full bg-white/10 text-emerald-300">
+                                <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+                            </span>
+                            <span>
+                                <span class="block text-sm text-slate-400">Địa chỉ</span>
+                                <span class="font-semibold text-white">Phú Tân, An Giang</span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+
+                <form class="bg-white/5 p-6 rounded-3xl border border-white/10" id="contactForm" data-reveal>
+                    <div class="grid gap-5 sm:grid-cols-2">
+                        <label class="form-field">
+                            <span>Họ và tên</span>
+                            <input type="text" name="name" placeholder="Tên của bạn" required>
+                        </label>
+                        <label class="form-field">
+                            <span>Số điện thoại</span>
+                            <input type="tel" name="phone" placeholder="Số điện thoại" required>
+                        </label>
+                    </div>
+                    <label class="form-field mt-5">
+                        <span>Email</span>
+                        <input type="emerald" name="email" placeholder="email@example.com" required>
+                    </label>
+                    <label class="form-field mt-5">
+                        <span>Nội dung</span>
+                        <textarea name="message" rows="5" placeholder="Bạn muốn trao đổi điều gì?" required></textarea>
+                    </label>
+                    <button class="mt-7 inline-flex w-full items-center justify-center gap-3 rounded-full bg-emerald-500 px-7 py-4 font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-emerald-300 hover:shadow-xl hover:shadow-emerald-400/20" type="submit">
+                        Gửi liên hệ
+                        <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+                    </button>
+                </form>
             </div>
-
-            <form className="contact-form" onSubmit={handleSubmit} data-reveal>
-              <div className="grid gap-5 sm:grid-cols-2">
-                <label className="form-field">
-                  <span>Họ và tên</span>
-                  <input type="text" name="name" placeholder="Tên của bạn" required />
-                </label>
-                <label className="form-field">
-                  <span>Số điện thoại</span>
-                  <input type="tel" name="phone" placeholder="Số điện thoại" required />
-                </label>
-              </div>
-              <label className="form-field mt-5">
-                <span>Email</span>
-                <input type="email" name="email" placeholder="email@example.com" required />
-              </label>
-              <label className="form-field mt-5">
-                <span>Nội dung</span>
-                <textarea name="message" rows={5} placeholder="Bạn muốn trao đổi điều gì?" required />
-              </label>
-              <button className="mt-7 inline-flex w-full items-center justify-center gap-3 rounded-full bg-emerald-500 px-7 py-4 font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-emerald-300 hover:shadow-xl hover:shadow-emerald-400/20" type="submit">
-                Gửi liên hệ
-                <i className="fa-solid fa-paper-plane" aria-hidden="true" />
-              </button>
-            </form>
-          </div>
         </section>
-      </main>
+    </main>
 
-      <footer className="bg-slate-950 px-5 py-8 text-center text-sm text-slate-400 sm:px-8">
+    <footer class="bg-slate-950 px-5 py-8 text-center text-sm text-slate-400 sm:px-8 border-t border-white/5">
         <p>© 2026 Nguyễn Huỳnh Kim Trang. Portfolio Giáo viên Hóa học.</p>
-      </footer>
-    </div>
-  );
-}
+    </footer>
+
+    <script>
+        // 1. Hiệu ứng Typewriter (Chữ chạy ở Hero section)
+        const typewriterTitles = [
+            "Giáo viên Hóa học",
+            "Thạc sĩ Hóa Lý tương lai",
+            "Người truyền lửa Khoa học"
+        ];
+        let wordIndex = 0;
+        let letterIndex = 0;
+        let isDeleting = false;
+        const typewriterTarget = document.getElementById("typewriter-text");
+
+        function type() {
+            const currentWord = typewriterTitles[wordIndex];
+            
+            if (isDeleting) {
+                letterIndex--;
+            } else {
+                letterIndex++;
+            }
+
+            typewriterTarget.textContent = currentWord.substring(0, letterIndex);
+
+            let typeSpeed = isDeleting ? 42 : 78;
+
+            if (!isDeleting && letterIndex === currentWord.length) {
+                typeSpeed = 1300; // Nghỉ một chút khi viết xong từ
+                isDeleting = true;
+            } else if (isDeleting && letterIndex === 0) {
+                isDeleting = false;
+                wordIndex = (wordIndex + 1) % typewriterTitles.length;
+                typeSpeed = 300;
+            }
+
+            setTimeout(type, typeSpeed);
+        }
+        // Khởi chạy chữ chạy sau khi load trang
+        document.addEventListener("DOMContentLoaded", () => setTimeout(type, 500));
+
+
+        // 2. Tự động sinh hiệu ứng bong bóng Phân tử bay nền (Molecule Field)
+        const container = document.getElementById("molecule-container");
+        for (let i = 0; i < 18; i++) {
+            const node = document.createElement("span");
+            node.className = "molecule-node";
+            node.style.left = `${(i * 17 + 8) % 96}%`;
+            node.style.bottom = `-20px`; // Xuất phát từ dưới cùng
+            node.style.animationDelay = `${(i % 6) * 0.65}s`;
+            node.style.animationDuration = `${7 + (i % 5)}s`;
+            container.appendChild(node);
+        }
+
+
+        // 3. Hiệu ứng hiển thị phần tử khi cuộn chuột đến (Intersection Observer)
+        const revealElements = document.querySelectorAll("[data-reveal]");
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("is-visible");
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15 });
+
+        revealElements.forEach((element) => observer.observe(element));
+
+
+        // 4. Xử lý nút gửi Form liên hệ
+        document.getElementById("contactForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            this.reset();
+            window.alert("Cảm ơn bạn đã liên hệ. Cô Trang sẽ phản hồi trong thời gian sớm nhất.");
+        });
+    </script>
+</body>
 </html>
